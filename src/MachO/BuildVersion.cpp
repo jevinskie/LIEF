@@ -109,6 +109,7 @@ BuildVersion::BuildVersion(const PLATFORMS platform,
                            sizeof(details::build_tool_version) * tools.size())},
   platform_{platform}, minos_{minos}, sdk_{sdk}, tools_{tools}
 {
+    original_data_.resize(size());
 }
 
 BuildVersion* BuildVersion::clone() const {
