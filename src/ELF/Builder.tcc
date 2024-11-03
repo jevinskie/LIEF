@@ -581,7 +581,7 @@ ok_error_t Builder::build_relocatable() {
   }
 
   // Check if we should relocate or create a .strtab section.
-  // We assume that a .shstrtab is always prensent
+  // We assume that a .shstrtab is always present
   if (!layout->is_strtab_shared_shstrtab() && !binary_->symtab_symbols_.empty()) {
     Section* sec_symtab = binary_->get(Section::TYPE::SYMTAB);
     if (sec_symtab == nullptr) {
@@ -691,7 +691,7 @@ ok_error_t Builder::build_sections() {
     string_names_section->content(layout_->raw_shstr());
   }
 
-  const std::unordered_map<std::string, size_t>& shstr_map = layout_->shstr_map();
+  const std::map<std::string, size_t>& shstr_map = layout_->shstr_map();
   for (size_t i = 0; i < binary_->sections_.size(); ++i) {
     const std::unique_ptr<Section>& section = binary_->sections_[i];
     LIEF_DEBUG("[FRAME  ] {}", section->is_frame());
@@ -855,7 +855,7 @@ ok_error_t Builder::build_symtab_symbols() {
   content.reserve(layout->static_sym_size<ELF_T>());
 
   // On recent compilers, the symtab string table is merged with the section name table
-  const std::unordered_map<std::string, size_t>* str_map = nullptr;
+  const std::map<std::string, size_t>* str_map = nullptr;
   if (layout->is_strtab_shared_shstrtab()) {
     str_map = &layout->shstr_map();
   } else {
@@ -1166,13 +1166,15 @@ ok_error_t Builder::build_obj_symbols() {
 
   using Elf_Sym  = typename ELF_T::Elf_Sym;
   const auto* layout = static_cast<const ObjectFileLayout*>(layout_.get());
-  const std::unordered_map<std::string, size_t>* str_map = nullptr;
+  const std::map<std::string, size_t>* str_map = nullptr;
 
   if (layout->is_strtab_shared_shstrtab()) {
     str_map = &layout->shstr_map();
   } else {
     str_map = &layout->strtab_map();
   }
+
+  LIEF_DEBUG("str_map: {}", fmt::join(*str_map, ", "));
 
   // Find the section associated with the address
   Section* symbol_table_section = binary_->get(Section::TYPE::SYMTAB);

@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -30,11 +31,11 @@ class Layout {
     binary_(&bin)
   {}
 
-  virtual const std::unordered_map<std::string, size_t>& shstr_map() const {
+  virtual const std::map<std::string, size_t>& shstr_map() const {
     return shstr_name_map_;
   }
 
-  virtual const std::unordered_map<std::string, size_t>& strtab_map() const {
+  virtual const std::map<std::string, size_t>& strtab_map() const {
     return strtab_name_map_;
   }
 
@@ -64,8 +65,8 @@ class Layout {
   protected:
   Binary* binary_ = nullptr;
 
-  std::unordered_map<std::string, size_t> shstr_name_map_;
-  std::unordered_map<std::string, size_t> strtab_name_map_;
+  std::map<std::string, size_t> shstr_name_map_;
+  std::map<std::string, size_t> strtab_name_map_;
 
   std::vector<uint8_t> raw_shstrtab_;
   std::vector<uint8_t> raw_strtab_;

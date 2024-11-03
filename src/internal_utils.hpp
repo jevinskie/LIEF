@@ -15,11 +15,14 @@
  */
 #ifndef LIEF_INTERNAL_UTILS_HEADER
 #define LIEF_INTERNAL_UTILS_HEADER
+#include <iterator>
 #include <string>
 #include <vector>
 #include <set>
 #include <algorithm>
 #include <unordered_map>
+#include <map>
+#include <utility>
 #include <sstream>
 #include "spdlog/fmt/fmt.h"
 
@@ -90,7 +93,7 @@ template<typename HANDLER>
 std::vector<std::string> optimize(const HANDLER& container,
                                   std::string(* getter)(const typename HANDLER::value_type&),
                                   size_t& offset_counter,
-                                  std::unordered_map<std::string, size_t> *of_map_p = nullptr)
+                                  std::map<std::string, size_t> *of_map_p = nullptr)
 {
   if (container.empty()) {
     return {};
@@ -161,7 +164,7 @@ std::vector<std::string> optimize(const HANDLER& container,
   std::sort(std::begin(string_table_optimized), std::end(string_table_optimized));
 
   if (of_map_p != nullptr) {
-    std::unordered_map<std::string, size_t>& offset_map = *of_map_p;
+    std::map<std::string, size_t>& offset_map = *of_map_p;
     offset_map[""] = 0;
     for (const auto &v : string_table_optimized) {
       offset_map[v] = offset_counter;
@@ -173,6 +176,23 @@ std::vector<std::string> optimize(const HANDLER& container,
   }
 
   return string_table_optimized;
+}
+
+template<typename HANDLER>
+std::vector<std::string> optimize(const HANDLER& container,
+                                  std::string(* getter)(const typename HANDLER::value_type&),
+                                  size_t& offset_counter,
+                                  std::unordered_map<std::string, size_t> *of_map_p = nullptr) {
+  if (!of_map_p) {
+    return optimize(container, getter, offset_counter, static_cast<std::map<std::string, size_t> *>(nullptr));
+  } else {
+    std::map<std::string, size_t> m{of_map_p->begin(), of_map_p->end()};
+    auto res = optimize(container, getter, offset_counter, &m);
+    of_map_p->clear();
+    of_map_p->insert(m.begin(), m.end());
+    // std::copy(m.begin(), m.end(), of_map_p->begin());
+    return res;
+  }
 }
 
 template<class T>
