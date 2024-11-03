@@ -32,6 +32,9 @@
 #include "LIEF/ELF/Segment.hpp"
 #include "LIEF/ELF/Builder.hpp"
 
+#include <cstdio>
+#define __LIEF_DEBUG(...) fprintf(stderr, __VA_ARGS__)
+
 namespace LIEF {
 /// Namespace related to the LIEF's ELF module
 namespace ELF {
@@ -332,10 +335,12 @@ class LIEF_API Binary : public LIEF::Binary {
 
   /// Return the debug symbols from the `.symtab` section.
   it_symtab_symbols symtab_symbols() {
+    __LIEF_DEBUG("symtab_symbols()\n");
     return symtab_symbols_;
   }
 
   it_const_symtab_symbols symtab_symbols() const {
+    __LIEF_DEBUG("symtab_symbols() const\n");
     return symtab_symbols_;
   }
 

@@ -233,7 +233,7 @@ void Section::content(const std::vector<uint8_t>& data) {
     return;
   }
 
-  LIEF_DEBUG("Set 0x{:x} bytes in the data handler@0x{:x} of section '{}'",
+  LIEF_DEBUG("Set 0x{:x} bytes in the data handler @0x{:x} of section '{}'",
              data.size(), file_offset(), name());
 
 
@@ -283,7 +283,7 @@ void Section::content(std::vector<uint8_t>&& data) {
     return;
   }
 
-  LIEF_DEBUG("Set 0x{:x} bytes in the data handler@0x{:x} of section '{}'",
+  LIEF_DEBUG("Set 0x{:x} bytes in the data handler @0x{:x} of section '{}'",
              data.size(), file_offset(), name());
 
   auto res = datahandler_->get(file_offset(), size(), DataHandler::Node::SECTION);

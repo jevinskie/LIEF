@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 
+#include <cstdio>
+#define __LIEF_DEBUG(...) fprintf(stderr, __VA_ARGS__)
+
 namespace LIEF {
 namespace ELF {
 class Section;
@@ -32,26 +35,32 @@ class Layout {
   {}
 
   virtual const std::map<std::string, size_t>& shstr_map() const {
+    __LIEF_DEBUG("shstr_map() const\n");
     return shstr_name_map_;
   }
 
   virtual const std::map<std::string, size_t>& strtab_map() const {
+    __LIEF_DEBUG("strtab_map() const\n");
     return strtab_name_map_;
   }
 
   virtual const std::vector<uint8_t>& raw_shstr() const {
+    __LIEF_DEBUG("raw_shstr() const\n");
     return raw_shstrtab_;
   }
 
   virtual const std::vector<uint8_t>& raw_strtab() const {
+    __LIEF_DEBUG("raw_strtab() const\n");
     return raw_strtab_;
   }
 
   void set_strtab_section(Section& section) {
+    __LIEF_DEBUG("set_strtab_section()\n");
     strtab_section_ = &section;
   }
 
   void set_dyn_sym_idx(int32_t val) {
+    __LIEF_DEBUG("set_dyn_sym_idx(%d)\n", val);
     new_symndx_ = val;
   }
 

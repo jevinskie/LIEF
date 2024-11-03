@@ -20,6 +20,8 @@
 
 #include <LIEF/iostream.hpp>
 
+#include "logging.hpp"
+
 namespace LIEF {
 namespace ELF {
 
@@ -62,9 +64,15 @@ size_t Layout::section_strtab_size() {
     return 0;
   }
 
+  if (!strtab_name_map_.empty()) {
+    LIEF_ERR("strtab_name_map_ isn't empty in is_strtab_shared_shstrtab()");
+  }
+  strtab_name_map_.insert_or_assign("", 0);
+
   std::vector<std::string> symstr_opt = optimize(binary_->symtab_symbols_,
                       [] (const std::unique_ptr<Symbol>& sym) { return sym->name(); },
                       offset_counter, &strtab_name_map_);
+  strtab_name_map_.insert_or_assign("", 0);
 
   for (const std::string& name : symstr_opt) {
     raw_strtab.write(name);

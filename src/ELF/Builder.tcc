@@ -551,8 +551,8 @@ ok_error_t Builder::build_relocatable() {
   auto* layout = static_cast<ObjectFileLayout*>(layout_.get());
 
   Header& header = binary_->header();
-  uint32_t new_symndx = sort_dynamic_symbols();
-  layout->set_dyn_sym_idx(new_symndx);
+  // uint32_t new_symndx = sort_dynamic_symbols();
+  // layout->set_dyn_sym_idx(new_symndx);
 
   // Check if we should relocate the .shstrtab
   if (header.section_name_table_idx() > 0) {
@@ -1170,8 +1170,10 @@ ok_error_t Builder::build_obj_symbols() {
 
   if (layout->is_strtab_shared_shstrtab()) {
     str_map = &layout->shstr_map();
+    LIEF_DEBUG("str_map = layout->shstr_map");
   } else {
     str_map = &layout->strtab_map();
+    LIEF_DEBUG("str_map = layout->strtab_map");
   }
 
   LIEF_DEBUG("str_map: {}", fmt::join(*str_map, ", "));
