@@ -20,6 +20,10 @@
 #include <numeric>
 #include <unordered_map>
 
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/std.h>
+
 #include "logging.hpp"
 
 #include "LIEF/BinaryStream/VectorStream.hpp"
@@ -53,6 +57,8 @@
 #include "ExeLayout.hpp"
 #include "ObjectFileLayout.hpp"
 #include "internal_utils.hpp"
+
+template <> struct fmt::formatter<LIEF::ELF::Symbol> : ostream_formatter {};
 
 namespace LIEF {
 namespace ELF {
@@ -813,10 +819,16 @@ ok_error_t Builder::build_symtab_symbols() {
   }
   LIEF_DEBUG(".symtab section: '{}'", symbol_section->name());
 
-  std::stable_sort(std::begin(binary_->symtab_symbols_), std::end(binary_->symtab_symbols_),
-      [](const std::unique_ptr<Symbol>& lhs, const std::unique_ptr<Symbol>& rhs) {
-        return lhs->is_local() && (rhs->is_global() || rhs->is_weak());
-  });
+  if (binary_->symtab_symbols_.empty()) {
+    LIEF_WARN(".symtab is empty");
+  } else {
+    // don't sort the first symtab entry since:
+    // "Index 0 both designates the first entry in the table and serves as the undefined symbol index."
+    std::stable_sort(std::next(std::begin(binary_->symtab_symbols_)), std::end(binary_->symtab_symbols_),
+        [](const std::unique_ptr<Symbol>& lhs, const std::unique_ptr<Symbol>& rhs) {
+          return lhs->is_local() && (rhs->is_global() || rhs->is_weak());
+    });
+  }
 
   const auto it_first_exported_symbol =
       std::find_if(std::begin(binary_->symtab_symbols_), std::end(binary_->symtab_symbols_),
@@ -850,6 +862,9 @@ ok_error_t Builder::build_symtab_symbols() {
     str_map = &layout->strtab_map();
   }
 
+  LIEF_DEBUG("str_map: {}", fmt::join(*str_map, ", "));
+
+  size_t tmp = 0;
   for (const std::unique_ptr<Symbol>& symbol : binary_->symtab_symbols_) {
     const std::string& name = symbol->name();
 
@@ -864,6 +879,9 @@ ok_error_t Builder::build_symtab_symbols() {
     Elf_Sym sym_hdr;
     memset(&sym_hdr, 0, sizeof(Elf_Sym));
     sym_hdr.st_name  = static_cast<Elf_Word>(offset_name);
+    if (sym_hdr.st_name == 18254) {
+      LIEF_DEBUG("sym_hdr.st_name == 18254 name: '{:s}' symbol: {} tmp: {:d}", name, *symbol, tmp);
+    }
     sym_hdr.st_info  = static_cast<unsigned char>(symbol->information());
     sym_hdr.st_other = static_cast<unsigned char>(symbol->other());
     sym_hdr.st_shndx = static_cast<Elf_Half>(symbol->shndx());
@@ -871,6 +889,7 @@ ok_error_t Builder::build_symtab_symbols() {
     sym_hdr.st_size  = static_cast<Elf_Word>(symbol->size());
 
     content.write<Elf_Sym>(sym_hdr);
+    ++tmp;
   }
   symbol_section->content(std::move(content.raw()));
   return ok();
@@ -1164,6 +1183,7 @@ ok_error_t Builder::build_obj_symbols() {
 
   // Build symbols
   vector_iostream symbol_table_raw(should_swap());
+  size_t tmp = 0;
   for (const std::unique_ptr<Symbol>& symbol : binary_->symtab_symbols_) {
     const std::string& name = symbol->name();
     const auto offset_it = str_map->find(name);
@@ -1178,6 +1198,9 @@ ok_error_t Builder::build_obj_symbols() {
     memset(&sym_header, 0, sizeof(Elf_Sym));
 
     sym_header.st_name  = static_cast<Elf_Word>(name_offset);
+    if (sym_header.st_name == 18254) {
+      LIEF_DEBUG("sym_header.st_name == 18254 name: '{:s}' symbol: {} tmp: {:d}", name, *symbol, tmp);
+    }
     sym_header.st_info  = static_cast<unsigned char>(symbol->information());
     sym_header.st_other = static_cast<unsigned char>(symbol->other());
     sym_header.st_shndx = static_cast<Elf_Half>(symbol->shndx());
@@ -1185,6 +1208,7 @@ ok_error_t Builder::build_obj_symbols() {
     sym_header.st_size  = static_cast<Elf_Addr>(symbol->size());
 
     symbol_table_raw.write(sym_header);
+    ++tmp;
   }
   symbol_table_section->content(std::move(symbol_table_raw.raw()));
   return ok();

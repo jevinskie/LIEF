@@ -17,8 +17,8 @@
 #include "LIEF/DWARF/enums.hpp"
 #include "third-party/utfcpp.hpp"
 
-#include <mbedtls/x509.h>
-#include <mbedtls/x509_crt.h>
+#include "mbedtls/x509.h"
+#include "mbedtls/x509_crt.h"
 
 #include <algorithm>
 

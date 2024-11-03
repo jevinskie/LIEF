@@ -140,7 +140,10 @@ if(NOT LIEF_OPT_MBEDTLS_EXTERNAL)
 
   add_dependencies(LIB_LIEF lief_mbed_tls)
 else()
-  find_package(MbedTLS REQUIRED)
+  if(NOT TARGET MbedTLS::mbedcrypto AND NOT TARGET MbedTLS::mbedx509)
+    message(WARNING "external mbedtls find_package")
+    find_package(MbedTLS REQUIRED)
+    endif()
   target_link_libraries(LIB_LIEF PRIVATE
                         MbedTLS::mbedcrypto MbedTLS::mbedx509)
 endif()
