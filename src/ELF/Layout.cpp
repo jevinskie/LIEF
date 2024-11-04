@@ -49,6 +49,7 @@ size_t Layout::section_strtab_size() {
   }
 
   if (is_strtab_shared_shstrtab()) {
+    fprintf(stderr, "section_strtab_size() is_strtab_shared_shstrtab() => true\n");
     // The content of .strtab is merged with .shstrtab
     return 0;
   }
@@ -62,13 +63,38 @@ size_t Layout::section_strtab_size() {
     return 0;
   }
 
+  size_t tmp = 0;
+  for (const auto &[k, v] : strtab_name_map_) {
+    fprintf(stderr, "section_strtab_size before opt strtab_name_map_[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+    ++tmp;
+  }
+  fprintf(stderr, "section_strtab_size() offset_counter begin: %zu\n", offset_counter);
+
   std::vector<std::string> symstr_opt = optimize(binary_->symtab_symbols_,
                       [] (const std::unique_ptr<Symbol>& sym) { return sym->name(); },
                       offset_counter, &strtab_name_map_);
 
+  fprintf(stderr, "section_strtab_size() offset_counter end: %zu\n", offset_counter);
+  tmp = 0;
+  for (const auto &[k, v] : strtab_name_map_) {
+    fprintf(stderr, "section_strtab_size after opt strtab_name_map_[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+    ++tmp;
+  }
+  fprintf(stderr, "section_strtab_size after opt symstr_opt[0]: '%s' symstr_opt[1]: '%s' symstr_opt[2]: '%s' symstr_opt[-1]: '%s' symstr_opt[-2]: '%s' symstr_opt[-3]: '%s'\n", symstr_opt.at(0).c_str(), symstr_opt.at(1).c_str(), symstr_opt.at(2).c_str(), symstr_opt.at(symstr_opt.size() - 1).c_str(), symstr_opt.at(symstr_opt.size() - 2).c_str(), symstr_opt.at(symstr_opt.size() - 3).c_str());
+
+
   for (const std::string& name : symstr_opt) {
     raw_strtab.write(name);
   }
+
+  auto itr = strtab_name_map_.begin();
+  std::advance(itr, strtab_name_map_.size() - 1);
+  const auto tmp2 = itr->second;
+  const auto null_idx = strtab_name_map_[""];
+  fprintf(stderr, "raw_strtab.raw().size(): %zu offset_counter: %zu\n", raw_strtab.raw().size(), offset_counter);
+  // fprintf(stderr, "raw_strtab[0...3]: 0x%02hhx 0x%02hhx 0x%02hhx raw_strtab[-3...-1]: 0x%02hhx 0x%02hhx 0x%02hhx raw_strtab[%zu]: 0x%02hhx 0x%02hhx 0x%02hhx\n", raw_strtab.raw().at(0), raw_strtab.raw().at(1), raw_strtab.raw().at(2), raw_strtab.raw().at(raw_strtab.raw().size() - 3), raw_strtab.raw().at(raw_strtab.raw().size() - 2), raw_strtab.raw().at(raw_strtab.raw().size() - 1), tmp2, raw_strtab.raw().at(tmp2 - 1), raw_strtab.raw().at(tmp2), raw_strtab.raw().at(tmp2 + 1));
+  fprintf(stderr, "raw_strtab[0...3]: 0x%02hhx 0x%02hhx 0x%02hhx raw_strtab[-3...-1]: 0x%02hhx 0x%02hhx 0x%02hhx raw_strtab[%zu]: 0x%02hhx null_idx: %zu raw_strtab[%zu]: 0x%02hhx\n", raw_strtab.raw().at(0), raw_strtab.raw().at(1), raw_strtab.raw().at(2), raw_strtab.raw().at(raw_strtab.raw().size() - 3), raw_strtab.raw().at(raw_strtab.raw().size() - 2), raw_strtab.raw().at(raw_strtab.raw().size() - 1), tmp2, raw_strtab.raw().at(tmp2), null_idx, null_idx, raw_strtab.raw().at(null_idx));
+
   raw_strtab.move(raw_strtab_);
   return raw_strtab_.size();
 }
@@ -114,8 +140,11 @@ size_t Layout::section_shstr_size() {
 
   // First write section names
   size_t offset_counter = raw_shstrtab.tellp();
+  fprintf(stderr, "section_shstr_size() offset_counter begin: %zu\n", offset_counter);
   std::vector<std::string> shstrtab_opt = optimize(sec_names, [] (const std::string& s) { return s; },
                       offset_counter, &shstr_name_map_);
+  fprintf(stderr, "section_shstr_size() offset_counter end: %zu\n", offset_counter);
+
 
   for (const std::string& name : shstrtab_opt) {
     raw_shstrtab.write(name);
@@ -125,9 +154,11 @@ size_t Layout::section_shstr_size() {
   // in this case, include the symtab symbol names
   if (!binary_->symtab_symbols_.empty() && is_strtab_shared_shstrtab()) {
     offset_counter = raw_shstrtab.tellp();
+    fprintf(stderr, "section_shstr_size() is_strtab_shared_shstrtab() offset_counter begin: %zu\n", offset_counter);
     std::vector<std::string> symstr_opt = optimize(binary_->symtab_symbols_,
                        [] (const std::unique_ptr<Symbol>& sym) { return sym->name(); },
                        offset_counter, &shstr_name_map_);
+    fprintf(stderr, "section_shstr_size() is_strtab_shared_shstrtab() offset_counter end: %zu\n", offset_counter);
     for (const std::string& name : symstr_opt) {
       raw_shstrtab.write(name);
     }

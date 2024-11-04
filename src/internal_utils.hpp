@@ -100,7 +100,7 @@ std::vector<std::string> optimize(const HANDLER& container,
   std::vector<std::string> string_table_optimized;
   string_table_optimized.reserve(container.size());
 
-  // reverse all symbol names and sort them so we can merge then in the linear time:
+  // reverse all symbol names and sort them so we can merge them in the linear time:
   // aaa, aadd, aaaa, cca, ca -> aaaa, aaa, acc, ac ddaa
   std::transform(std::begin(container), std::end(container),
                  std::inserter(string_table, std::end(string_table)),
@@ -126,7 +126,7 @@ std::vector<std::string> optimize(const HANDLER& container,
   );
 
   // as all elements that can be merged are adjacent we can just go through the list once
-  // and memorize one we merged to calculate the offsets later
+  // and memorize ones we merged to calculate the offsets later
   std::unordered_map<std::string, std::string> merged_map;
   size_t to_set_idx = 0, cur_elm_idx = 1;
   for (; cur_elm_idx < string_table_optimized.size(); ++cur_elm_idx) {
@@ -149,9 +149,11 @@ std::vector<std::string> optimize(const HANDLER& container,
   }
   // if the first one is empty
   if (string_table_optimized[0].empty()) {
+    fprintf(stderr, "string_table_optimized[0].empty() is true swapping '%s' with '%s' to_set_idx: %zu\n", string_table_optimized[0].c_str(), string_table_optimized[to_set_idx].c_str(), to_set_idx);
     std::swap(string_table_optimized[0], string_table_optimized[to_set_idx]);
     --to_set_idx;
   }
+  fprintf(stderr, "string_table_optimized[0]: '%s' string_table_optimized[to_set_idx]: '%s' to_set_idx: %zu\n", string_table_optimized[0].c_str(), string_table_optimized[to_set_idx].c_str(), to_set_idx);
   string_table_optimized.resize(to_set_idx + 1);
 
   //reverse symbols back and sort them again
@@ -160,15 +162,47 @@ std::vector<std::string> optimize(const HANDLER& container,
   }
   std::sort(std::begin(string_table_optimized), std::end(string_table_optimized));
 
+  size_t tmp = 0;
+  for (const auto &v : string_table_optimized) {
+    fprintf(stderr, "optimize final string_table_optimized[%zu]: '%s'\n", tmp, v.c_str());
+    ++tmp;
+  }
+
   if (of_map_p != nullptr) {
     std::unordered_map<std::string, size_t>& offset_map = *of_map_p;
-    offset_map[""] = 0;
+    tmp = 0;
+    for (const auto &[k, v] : offset_map) {
+      fprintf(stderr, "section_strtab_size AAA offset_map[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+      ++tmp;
+    }
+    // offset_map[""] = 0;
+    tmp = 0;
+    for (const auto &[k, v] : offset_map) {
+      fprintf(stderr, "section_strtab_size BBB offset_map[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+      ++tmp;
+    }
     for (const auto &v : string_table_optimized) {
       offset_map[v] = offset_counter;
       offset_counter += v.size() + 1;
     }
+    tmp = 0;
+    for (const auto &[k, v] : offset_map) {
+      fprintf(stderr, "section_strtab_size CCC offset_map[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+      ++tmp;
+    }
     for (const auto &kv : merged_map) {
       offset_map[kv.first] = offset_map[kv.second] + (kv.second.size() - kv.first.size());
+    }
+    tmp = 0;
+    for (const auto &[k, v] : offset_map) {
+      fprintf(stderr, "section_strtab_size DDD offset_map[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+      ++tmp;
+    }
+    offset_map[""] = 0;
+    tmp = 0;
+    for (const auto &[k, v] : offset_map) {
+      fprintf(stderr, "section_strtab_size EEE offset_map[%zu] k: '%s' v: %zu\n", tmp, k.c_str(), v);
+      ++tmp;
     }
   }
 
