@@ -100,7 +100,7 @@ std::vector<std::string> optimize(const HANDLER& container,
   std::vector<std::string> string_table_optimized;
   string_table_optimized.reserve(container.size());
 
-  // reverse all symbol names and sort them so we can merge then in the linear time:
+  // reverse all symbol names and sort them so we can merge them in the linear time:
   // aaa, aadd, aaaa, cca, ca -> aaaa, aaa, acc, ac ddaa
   std::transform(std::begin(container), std::end(container),
                  std::inserter(string_table, std::end(string_table)),
@@ -126,7 +126,7 @@ std::vector<std::string> optimize(const HANDLER& container,
   );
 
   // as all elements that can be merged are adjacent we can just go through the list once
-  // and memorize one we merged to calculate the offsets later
+  // and memorize ones we merged to calculate the offsets later
   std::unordered_map<std::string, std::string> merged_map;
   size_t to_set_idx = 0, cur_elm_idx = 1;
   for (; cur_elm_idx < string_table_optimized.size(); ++cur_elm_idx) {
@@ -162,7 +162,6 @@ std::vector<std::string> optimize(const HANDLER& container,
 
   if (of_map_p != nullptr) {
     std::unordered_map<std::string, size_t>& offset_map = *of_map_p;
-    offset_map[""] = 0;
     for (const auto &v : string_table_optimized) {
       offset_map[v] = offset_counter;
       offset_counter += v.size() + 1;
@@ -170,6 +169,8 @@ std::vector<std::string> optimize(const HANDLER& container,
     for (const auto &kv : merged_map) {
       offset_map[kv.first] = offset_map[kv.second] + (kv.second.size() - kv.first.size());
     }
+    // Fix the NUL strtab entry to the initial NUL byte required by ELF and MachO
+    offset_map[""] = 0;
   }
 
   return string_table_optimized;
