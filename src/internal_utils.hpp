@@ -162,15 +162,19 @@ std::vector<std::string> optimize(const HANDLER& container,
 
   if (of_map_p != nullptr) {
     std::unordered_map<std::string, size_t>& offset_map = *of_map_p;
+    offset_map[""] = 0;
+
     for (const auto &v : string_table_optimized) {
-      offset_map[v] = offset_counter;
-      offset_counter += v.size() + 1;
+      if (!v.empty()) {
+        offset_map[v] = offset_counter;
+        offset_counter += v.size() + 1;
+      }
     }
     for (const auto &kv : merged_map) {
-      offset_map[kv.first] = offset_map[kv.second] + (kv.second.size() - kv.first.size());
+      if (!kv.first.empty()) {
+        offset_map[kv.first] = offset_map[kv.second] + (kv.second.size() - kv.first.size());
+      }
     }
-    // Fix the NUL strtab entry to the initial NUL byte required by ELF and MachO
-    offset_map[""] = 0;
   }
 
   return string_table_optimized;
