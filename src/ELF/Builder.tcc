@@ -567,9 +567,10 @@ ok_error_t Builder::build_relocatable() {
   Section* symtab = binary_->get(Section::TYPE::SYMTAB);
   if (symtab != nullptr) {
     const size_t needed_size = layout->symtab_size<ELF_T>();
+    LIEF_DEBUG("needed size: {:d} symtab->size(): {:d}", needed_size, symtab->size());
     if (needed_size > symtab->size() || config_.force_relocate) {
       LIEF_DEBUG("[-] Need to relocate '{}' section (0x{:x} new bytes)",
-                 symtab->name(), symtab->size() - needed_size);
+                 symtab->name(), needed_size - symtab->size());
       layout->relocate_section(*symtab, needed_size);
     }
   }
@@ -1243,6 +1244,11 @@ ok_error_t Builder::build_dynamic_symbols() {
   return ok();
 }
 
+__attribute__((noinline))
+void builder_break(void) {
+  return;
+}
+
 template<typename ELF_T>
 ok_error_t Builder::build_section_relocations() {
   using Elf_Addr   = typename ELF_T::Elf_Addr;
@@ -1275,6 +1281,9 @@ ok_error_t Builder::build_section_relocations() {
                 return lhs->address() < rhs->address();
               });
     for (Relocation* reloc : relocs) {
+      if (reloc->address() == 0x17c) {
+        builder_break();
+      }
       Section* reloc_section = sec_relo_map.at(section);
       uint32_t symidx = 0;
 
